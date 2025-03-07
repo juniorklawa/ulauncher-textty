@@ -89,7 +89,7 @@ class ItemEnterEventListener(EventListener):
         return RenderResultListAction(
             [
                 ExtensionResultItem(
-                    icon="images/textty.png", name="Press enter to copy.", description=response['response'], on_enter=CopyToClipboardAction(response['response'])
+                    icon="images/textty.png", name=response['response'], description="Press enter to copy.", on_enter=CopyToClipboardAction(response['response'])
                 )
             ]
         )
