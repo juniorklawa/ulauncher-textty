@@ -1,0 +1,47 @@
+{
+  "required_api_version": "2",
+  "name": "Textty",
+  "description": "A ulauncher extension for text transformation",
+  "developer_name": "Everaldo Junior",
+  "icon": "images/textty.png",
+  "options": {
+    "query_debounce": 0.1
+  },
+  "preferences": [
+    {
+      "id": "ollama_kw",
+      "type": "keyword",
+      "name": "Ollama",
+      "description": "Keyword to trigger the ollama extension",
+      "default_value": "ty"
+    },
+    {
+      "id": "ollama_host",
+      "type": "text",
+      "name": "Ollama Host",
+      "description": "Ollama host to connect to",
+      "default_value": "http://localhost:11434"
+    },
+    {
+      "id": "ollama_default_model",
+      "type": "text",
+      "name": "Default Model",
+      "description": "Default model to use when communicating with ollama",
+      "default_value": "llama3.1:8b"
+    },
+    {
+      "id": "ollama_system_prompt",
+      "type": "text",
+      "name": "System Prompt",
+      "description": "Provide a system prompt to overwrite what is in your particular modelfile",
+      "default_value": "You are an inline assitant, keep your responses short and sweet."
+    },
+    {
+      "id": "ollama_headers",
+      "type": "text",
+      "name": "Ollama Headers",
+      "description": "Optional Headers to be passed on every ollama api request. Comma separated for multiple values.",
+      "default_value": ""
+    }
+  ]
+}
