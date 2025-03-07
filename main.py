@@ -103,11 +103,11 @@ class KeywordQueryEventListener(EventListener):
             ExtensionResultItem(
                 icon="images/textty.png",
                 name="Fix Grammar",
-                description=f"Fix grammar issues ✅",
+                description=f"Fix grammar ✅",
                 on_enter=ExtensionCustomAction({
                     "query": query, 
                     "model": extension.preferences["ollama_default_model"], 
-                    "system_prompt": extension.preferences['ollama_system_prompt'] + " You are a grammar expert. Fix the grammar of the text. IMPORTANT: Only return the fixed text, do not include any other text in your response."
+                    "system_prompt": extension.preferences['ollama_system_prompt'] + " You are a grammar expert. Fix the grammar of the text. Keep the same tone, style, and structure of the text. IMPORTANT: Only return the fixed text, do not include any other text in your response."
                 }, keep_app_open=True),
             ),
             ExtensionResultItem(
