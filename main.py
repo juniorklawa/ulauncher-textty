@@ -132,7 +132,7 @@ class ItemEnterEventListener(EventListener):
             [
                 ExtensionResultItem(
                     icon="images/textty.png", 
-                    name="Press enter to copy", 
+                    name="Textty:", 
                     description=wrapped_answer, 
                     on_enter=CopyToClipboardAction(ai_answer)
                 )
@@ -142,7 +142,7 @@ class ItemEnterEventListener(EventListener):
 
 class KeywordQueryEventListener(EventListener):
     def on_event(self, event, extension):
-        query = event.get_query().replace(extension.preferences["ollama_kw"] + " ", "")
+        query = event.get_query().replace(extension.preferences["textty_kw"] + " ", "")
 
         items = [
             ExtensionResultItem(
