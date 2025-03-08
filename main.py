@@ -85,11 +85,31 @@ class ItemEnterEventListener(EventListener):
         response = extension.generate(query)
 
         logger.debug(response)
+        
+        # Get the AI response text
+        ai_answer = response['response']
+        
+        # Wrap the text for better display
+        wrap_length = 80  # You can adjust this value as needed
+        wrapped_lines = []
+        current_line = ""
+        for word in ai_answer.split():
+            if len(current_line + word) <= wrap_length:
+                current_line += " " + word
+            else:
+                wrapped_lines.append(current_line.strip())
+                current_line = word
+        wrapped_lines.append(current_line.strip())
+
+        wrapped_answer = "\n".join(wrapped_lines)
 
         return RenderResultListAction(
             [
                 ExtensionResultItem(
-                    icon="images/textty.png", name=response['response'], description="Press enter to copy.", on_enter=CopyToClipboardAction(response['response'])
+                    icon="images/textty.png", 
+                    name="Press enter to copy", 
+                    description=wrapped_answer, 
+                    on_enter=CopyToClipboardAction(ai_answer)
                 )
             ]
         )
@@ -107,7 +127,7 @@ class KeywordQueryEventListener(EventListener):
                 on_enter=ExtensionCustomAction({
                     "query": query, 
                     "model": extension.preferences["ollama_default_model"], 
-                    "system_prompt": extension.preferences['ollama_system_prompt'] + " You are a grammar expert. Fix the grammar of the text. Keep the same tone, style, and structure of the text. IMPORTANT: Only return the fixed text, do not include any other text in your response."
+                    "system_prompt": "You are a grammar expert. Fix the grammar of the text. Keep the same tone, style, and structure of the text. IMPORTANT: Only return the fixed text, do not include any other text in your response."
                 }, keep_app_open=True),
             ),
             ExtensionResultItem(
