@@ -37,7 +37,7 @@ class TexttyExtension(Extension):
         response = r.json()
 
         if r.status_code != 200:
-            raise OllamaException("Error connecting to ollama.")
+            raise TextyyException("Error connecting to ollama.")
 
         models = []
 
@@ -68,7 +68,7 @@ class TexttyExtension(Extension):
         response = r.json()
 
         if r.status_code != 200:
-            raise OllamaException(
+            raise TextyyException(
                 "Error connecting to ollama.")
 
         logger.debug(response)
@@ -155,7 +155,7 @@ class KeywordQueryEventListener(EventListener):
         return RenderResultListAction(items)
 
 
-class OllamaException(Exception):
+class TextyyException(Exception):
     """Exception thrown when there was an error calling the ollama API"""
 
     pass
