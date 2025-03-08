@@ -23,25 +23,40 @@
       "default_value": "http://localhost:11434"
     },
     {
-      "id": "ollama_default_model",
+      "id": "default_model",
       "type": "text",
       "name": "Default Model",
-      "description": "Default model to use when communicating with ollama",
+      "description": "Default model to use when communicating with the AI provider",
       "default_value": "llama3.1:8b"
     },
     {
-      "id": "ollama_system_prompt",
-      "type": "text",
-      "name": "System Prompt",
-      "description": "Provide a system prompt to overwrite what is in your particular modelfile",
-      "default_value": "You are an inline assitant, keep your responses short and sweet."
+      "id": "ai_provider",
+      "type": "select",
+      "name": "AI Provider",
+      "description": "Select AI provider to use",
+      "default_value": "ollama",
+      "options": ["ollama", "openai"]
     },
     {
-      "id": "ollama_headers",
+      "id": "openai_api_key",
       "type": "text",
-      "name": "Ollama Headers",
-      "description": "Optional Headers to be passed on every ollama api request. Comma separated for multiple values.",
+      "name": "OpenAI API Key",
+      "description": "API key for OpenAI",
       "default_value": ""
+    },
+    {
+      "id": "default_prompt",
+      "type": "text",
+      "name": "Default Prompt",
+      "description": "Text that will be appended to every query you make",
+      "default_value": "You are an inline assistant, keep your responses short and sweet."
+    },
+    {
+      "id": "wrap_length",
+      "type": "input",
+      "name": "Line Length",
+      "description": "The maximum number of characters per line",
+      "default_value": "80"
     }
   ]
 }

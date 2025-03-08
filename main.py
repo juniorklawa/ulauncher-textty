@@ -21,40 +21,34 @@ class TexttyExtension(Extension):
         self.subscribe(KeywordQueryEvent, KeywordQueryEventListener())
         self.subscribe(ItemEnterEvent, ItemEnterEventListener())
 
-    def get_ollama_headers(self):
-        headers = {}
-        if self.preferences["ollama_headers"]:
-            for header in self.preferences["ollama_headers"].split(","):
-                header_key, header_value = header.split(":")
-                headers[header_key.strip()] = header_value.strip()
-        return headers
-
-    def list_models(self):
-        r = requests.get(
-            self.preferences["ollama_host"] + "/api/tags",
-            headers=self.get_ollama_headers(),
-        )
-        response = r.json()
-
-        if r.status_code != 200:
-            raise TextyyException("Error connecting to ollama.")
-
-        models = []
-
-        for m in response["models"]:
-            if m and m["name"]:
-                models.append(m["name"])
-
-        return models
-
     def generate(self, event):
         logger.info(event)
         
-        system_prompt = event.get('system_prompt', self.preferences['ollama_system_prompt'])
-        prompt = event['query']
+        # Get the base system prompt from preferences
+        base_system_prompt = self.preferences['default_prompt']
         
+        # Get the custom system prompt from the event, if any
+        custom_system_prompt = event.get('system_prompt', '')
+        
+        # Combine the prompts if both exist
+        if custom_system_prompt:
+            system_prompt = f"{base_system_prompt} {custom_system_prompt}"
+        else:
+            system_prompt = base_system_prompt
+        
+        prompt = event['query']
+        model = event.get('model', self.preferences['default_model'])
+        
+        if self.preferences['ai_provider'] == 'ollama':
+            return self._generate_ollama(prompt, system_prompt, model)
+        elif self.preferences['ai_provider'] == 'openai':
+            return self._generate_openai(prompt, system_prompt, model)
+        else:
+            raise TexttyException(f"Unknown AI provider: {self.preferences['ai_provider']}")
+
+    def _generate_ollama(self, prompt, system_prompt, model):
         data = {
-            "model": event['model'],
+            "model": model,
             "prompt": prompt,
             "system": system_prompt,
             "stream": False
@@ -62,18 +56,45 @@ class TexttyExtension(Extension):
 
         r = requests.post(
             self.preferences["ollama_host"] + "/api/generate",
-            data=json.dumps(data),
-            headers=self.get_ollama_headers(),
+            data=json.dumps(data)
         )
-        response = r.json()
-
+        
         if r.status_code != 200:
-            raise TextyyException(
-                "Error connecting to ollama.")
-
+            raise TexttyException("Error connecting to ollama.")
+            
+        response = r.json()
         logger.debug(response)
+        
+        return {"response": response['response']}
 
-        return response
+    def _generate_openai(self, prompt, system_prompt, model):
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.preferences['openai_api_key']}"
+        }
+        
+        data = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt}
+            ]
+        }
+        
+        r = requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers=headers,
+            data=json.dumps(data)
+        )
+        
+        if r.status_code != 200:
+            raise TexttyException("Error connecting to OpenAI API.")
+            
+        response = r.json()
+        logger.debug(response)
+        
+        return {"response": response['choices'][0]['message']['content']}
+
 
 class ItemEnterEventListener(EventListener):
     def on_event(self, event, extension):
@@ -90,7 +111,11 @@ class ItemEnterEventListener(EventListener):
         ai_answer = response['response']
         
         # Wrap the text for better display
-        wrap_length = 80  # You can adjust this value as needed
+        try:
+            wrap_length = int(extension.preferences["wrap_length"])
+        except ValueError:
+            wrap_length = 80  # Default if preference is not a valid integer
+            
         wrapped_lines = []
         current_line = ""
         for word in ai_answer.split():
@@ -125,9 +150,8 @@ class KeywordQueryEventListener(EventListener):
                 name="Fix Grammar",
                 description=f"Fix grammar ✅",
                 on_enter=ExtensionCustomAction({
-                    "query": query, 
-                    "model": extension.preferences["ollama_default_model"], 
-                    "system_prompt": "You are a grammar expert. Fix the grammar of the text. Keep the same tone, style, and structure of the text. IMPORTANT: Only return the fixed text, do not include any other text in your response."
+                    "query": f"You are a grammar expert. Fix the grammar of the text. Keep the same tone, style, and structure of the text. IMPORTANT: Only return the fixed text, do not include any other text in your response. Here's the text to fix: {query}", 
+                    "model": extension.preferences["default_model"], 
                 }, keep_app_open=True),
             ),
             ExtensionResultItem(
@@ -135,9 +159,8 @@ class KeywordQueryEventListener(EventListener):
                 name="More Casual",
                 description=f"Make this more conversational 🏖️",
                 on_enter=ExtensionCustomAction({
-                    "query": query, 
-                    "model": extension.preferences["ollama_default_model"], 
-                    "system_prompt": "You are a writing style expert. Convert the following text to a more casual, conversational tone. IMPORTANT: Only return the converted text, do not include any other text in your response."
+                    "query": f"You are a writing style expert. Convert the following text to a more casual, conversational tone. IMPORTANT: Only return the converted text, do not include any other text in your response. Here's the text to convert: {query}", 
+                    "model": extension.preferences["default_model"], 
                 }, keep_app_open=True),
             ),
             ExtensionResultItem(
@@ -145,9 +168,8 @@ class KeywordQueryEventListener(EventListener):
                 name="More Formal",
                 description=f"Make this more professional 👔",
                 on_enter=ExtensionCustomAction({
-                    "query": query, 
-                    "model": extension.preferences["ollama_default_model"], 
-                    "system_prompt": "You are a writing style expert. Convert the following text to a more formal, professional tone. IMPORTANT: Only return the converted text, do not include any other text in your response."
+                    "query": f"You are a writing style expert. Convert the following text to a more formal, professional tone. IMPORTANT: Only return the converted text, do not include any other text in your response. Here's the text to convert: {query}", 
+                    "model": extension.preferences["default_model"], 
                 }, keep_app_open=True),
             )
         ]
@@ -155,9 +177,8 @@ class KeywordQueryEventListener(EventListener):
         return RenderResultListAction(items)
 
 
-class TextyyException(Exception):
-    """Exception thrown when there was an error calling the ollama API"""
-
+class TexttyException(Exception):
+    """Exception thrown when there was an error calling the AI API"""
     pass
 
 
